@@ -1,0 +1,17 @@
+version: '3.4'
+
+services:
+    php:
+        volumes:
+            - .:/usr/src/app
+        environment:
+            NEO4J_URL: bolt://neo4j
+
+    neo4j:
+        environment:
+            NEO4J_AUTH: none
+        ports:
+            - 7474:7474
+            - 7687:7687
+
+

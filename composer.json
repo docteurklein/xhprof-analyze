@@ -1,0 +1,19 @@
+{
+    "name": "docteurklein/xhprof-analyze",
+    "description": "Analyze xhprof dumps",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Klein Florian",
+            "email": "florian.klein@free.fr"
+        }
+    ],
+    "require": {
+        "ext-tideways_xhprof": "^5.0",
+        "graphaware/neo4j-php-client": "^4.8"
+    },
+    "autoload": {
+        "files": ["src/utils.php"]
+    }
+}

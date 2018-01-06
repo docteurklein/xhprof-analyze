@@ -1,0 +1,50 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+set_error_handler(function($no, $str, $file, $line) {
+    throw new \ErrorException($str, $no, 1, $file, $line);
+});
+
+$id = $argv[1];
+$data = unserialize(file_get_contents('php://stdin'));
+
+require(__DIR__.'/../vendor/autoload.php');
+
+use GraphAware\Neo4j\Client\ClientBuilder;
+
+$client = ClientBuilder::create()->addConnection('bolt', getenv('NEO4J_URL'))->build();
+
+$stack = $client->stack();
+
+foreach ($data as $relation => $stats) {
+    $call = explode('==>', $relation);
+    $stack->push('MERGE (:Function {id: {id}, name: {name}})', ['id' => $id, 'name' => $call[0],]);
+
+    if (!isset($call[1])) {
+        continue;
+    }
+    [$caller, $callee] = $call;
+    $stack->push('MERGE (:Function {id: {id}, name: {name}})', ['id' => $id, 'name' => $callee,]);
+
+    $stats['wall_time'] = format_micro_seconds($stats['wt']);
+    $stats['cpu_time'] = format_micro_seconds($stats['cpu']);
+    $stats['memory_increase'] = format_bytes($stats['mu']);
+    $stats['peak_memory_increase'] = format_bytes($stats['pmu']);
+
+    $stack->push(<<<CYPHER
+        MATCH (caller:Function {id: {id}, name: {caller}}),(callee:Function {id: {id}, name: {callee}})
+        CREATE (caller)-[:CALLS {stats}]->(callee)
+CYPHER
+    , [
+        'stats' => $stats,
+        'caller' => $caller,
+        'callee' => $callee,
+        'id' => $id,
+    ]);
+    echo $relation, "\n";
+}
+
+$results = $client->runStack($stack);
+

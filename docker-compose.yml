@@ -1,0 +1,11 @@
+version: '3.4'
+
+services:
+    php:
+        build: .
+        image: docteurklein/xhprof-analyze
+        depends_on:
+            - neo4j
+
+    neo4j:
+        image: neo4j

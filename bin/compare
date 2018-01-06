@@ -1,0 +1,52 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+set_error_handler(function($no, $str, $file, $line) {
+    throw new \ErrorException($str, $no, 1, $file, $line);
+});
+
+$old = $argv[1];
+$new = $argv[2];
+
+require(__DIR__.'/../vendor/autoload.php');
+
+use GraphAware\Neo4j\Client\ClientBuilder;
+
+$client = ClientBuilder::create()->addConnection('bolt', getenv('NEO4J_URL'))->build();
+
+$result = $client->run(<<<CYPHER
+    MATCH
+        (old_caller:Function {id: {old_id}})-[old_stats:CALLS]-(old_callee:Function {id: {old_id}}),
+        (new_caller:Function {id: {new_id}, name: old_caller.name})-[new_stats:CALLS]->(new_callee:Function {id: {new_id}, name: old_callee.name})
+    WITH new_caller, new_stats{.*, diff: {
+        cpu: new_stats.cpu - new_stats.cpu,
+        wt: new_stats.wt - old_stats.wt,
+        mu: new_stats.mu - old_stats.mu,
+        pmu: new_stats.pmu - old_stats.pmu
+    }} as stats, new_callee
+    RETURN new_caller as caller, stats, new_callee as callee;
+CYPHER
+    , [
+        'old_id' => $old,
+        'new_id' => $new,
+    ]
+);
+
+echo 'strict digraph {';
+
+foreach ($result->records() as $record) {
+    $caller = $record->get('caller');
+    $callee = $record->get('callee');
+    printf('%s [label="%s"];%s', $caller->identity(), $caller->name, "\n");
+    printf('%s [label="%s"];%s', $callee->identity(), $callee->name, "\n");
+    vprintf('%s -> %s [label="%s"];%s', [
+        $caller->identity(),
+        $callee->identity(),
+        format_micro_seconds($record->get('stats')['diff']['wt']),
+        "\n"
+    ]);
+}
+
+echo '}';
