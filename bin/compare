@@ -41,10 +41,12 @@ foreach ($result->records() as $record) {
     $callee = $record->get('callee');
     printf('%s [label="%s"];%s', $caller->identity(), $caller->name, "\n");
     printf('%s [label="%s"];%s', $callee->identity(), $callee->name, "\n");
-    vprintf('%s -> %s [label="%s"];%s', [
+    $diff_wt = $record->get('stats')['diff']['wt'];
+    vprintf('%s -> %s [label="%s",color=%s];%s', [
         $caller->identity(),
         $callee->identity(),
-        format_micro_seconds($record->get('stats')['diff']['wt']),
+        sprintf('%s%s', $diff_wt < 0 ? '' : '+', format_micro_seconds($diff_wt)),
+        $diff_wt < 0 ? 'green' : 'red',
         "\n"
     ]);
 }
