@@ -6,6 +6,7 @@ services:
             - .:/usr/src/app
         environment:
             NEO4J_URL: bolt://neo4j
+        user: 1000:1000
 
     neo4j:
         environment:

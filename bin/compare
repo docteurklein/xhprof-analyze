@@ -9,6 +9,7 @@ set_error_handler(function($no, $str, $file, $line) {
 
 $old = $argv[1];
 $new = $argv[2];
+$what = $argv[3];
 
 require(__DIR__.'/../vendor/autoload.php');
 
@@ -18,13 +19,19 @@ $client = ClientBuilder::create()->addConnection('bolt', getenv('NEO4J_URL'))->b
 
 $result = $client->run(<<<CYPHER
     MATCH
-        (old_caller:Function {id: {old_id}})-[old_stats:CALLS]-(old_callee:Function {id: {old_id}}),
-        (new_caller:Function {id: {new_id}, name: old_caller.name})-[new_stats:CALLS]->(new_callee:Function {id: {new_id}, name: old_callee.name})
+        (old_caller:Function)-[old_stats:CALLS {run_id: {old_id}}]->(old_callee:Function),
+        (new_caller:Function {name: old_caller.name})-[new_stats:CALLS {run_id: {new_id}}]->(new_callee:Function {name: old_callee.name})
     WITH new_caller, new_stats{.*, diff: {
-        cpu: new_stats.cpu - new_stats.cpu,
-        wt: new_stats.wt - old_stats.wt,
-        mu: new_stats.mu - old_stats.mu,
-        pmu: new_stats.pmu - old_stats.pmu
+        xhprof_cpu : new_stats.cpu  - old_stats.cpu,
+        xhprof_wt  : new_stats.wt   - old_stats.wt,
+        xhprof_ct  : new_stats.ct   - old_stats.ct,
+        xhprof_mu  : new_stats.mu   - old_stats.mu,
+        xhprof_pmu : new_stats.pmu  - old_stats.pmu,
+        memprof_memory_size            : new_stats.memory_size             - old_stats.memory_size,
+        memprof_memory_size_inclusive  : new_stats.memory_size_inclusive   - old_stats.memory_size_inclusive,
+        memprof_blocks_count           : new_stats.blocks_count            - old_stats.blocks_count,
+        memprof_blocks_count_inclusive : new_stats.blocks_count_inclusive  - old_stats.blocks_count_inclusive,
+        memprof_calls                  : new_stats.calls                   - old_stats.calls
     }} as stats, new_callee
     RETURN new_caller as caller, stats, new_callee as callee;
 CYPHER
@@ -34,19 +41,32 @@ CYPHER
     ]
 );
 
+const map = [
+    'xhprof_cpu' => 'format_micro_seconds',
+    'xhprof_wt' => 'format_micro_seconds',
+    'xhprof_ct' => 'format_cardinality',
+    'xhprof_mu' => 'format_bytes',
+    'xhprof_pmu' => 'format_bytes',
+    'memprof_memory_size' => 'format_bytes',
+    'memprof_memory_size_inclusive' => 'format_bytes',
+    'memprof_blocks_count' => 'format_cardinality',
+    'memprof_blocks_count_inclusive' => 'format_cardinality',
+    'memprof_calls' => 'format_cardinality',
+];
+
 echo 'strict digraph {';
 
 foreach ($result->records() as $record) {
     $caller = $record->get('caller');
     $callee = $record->get('callee');
+    $diff = $record->get('stats')['diff'][$what];
     printf('%s [label="%s"];%s', $caller->identity(), $caller->name, "\n");
     printf('%s [label="%s"];%s', $callee->identity(), $callee->name, "\n");
-    $diff_wt = $record->get('stats')['diff']['wt'];
-    vprintf('%s -> %s [label="%s",color=%s];%s', [
+    vprintf('%s -> %s [label="%s",color="%s"];%s', [
         $caller->identity(),
         $callee->identity(),
-        sprintf('%s%s', $diff_wt < 0 ? '' : '+', format_micro_seconds($diff_wt)),
-        $diff_wt < 0 ? 'green' : 'red',
+        map[$what]($diff, true),
+        $diff < 0 ? 'green' : ($diff == 0 ? '' : 'red'),
         "\n"
     ]);
 }

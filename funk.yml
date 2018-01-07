@@ -1,0 +1,6 @@
+default:
+    autoload:
+        tests: '%paths.base%'
+
+    suites:
+        funk: ~

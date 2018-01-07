@@ -1,7 +1,8 @@
 <?php
 
-tideways_xhprof_enable(TIDEWAYS_XHPROF_FLAGS_MEMORY | TIDEWAYS_XHPROF_FLAGS_CPU);
+//tideways_xhprof_enable(TIDEWAYS_XHPROF_FLAGS_MEMORY | TIDEWAYS_XHPROF_FLAGS_CPU);
 //tideways_xhprof_enable();
+memprof_enable();
 
 function one() {
     two();
@@ -20,6 +21,8 @@ function three() {
 }
 
 function five() {
+        range(0, 1000000);
+        range(0, 1000000);
 }
 
 function six() {
@@ -30,12 +33,13 @@ class four {
     public function __construct()
     {
         range(0, 1000000);
-        range(0, 1000000);
     }
 }
 
 
 one();
 
-echo serialize(tideways_xhprof_disable());
+
+echo json_encode(memprof_dump_array());
+//echo json_encode(tideways_xhprof_disable());
 
