@@ -14,7 +14,10 @@
         "graphaware/neo4j-php-client": "^4.8"
     },
     "autoload": {
-        "files": ["src/format.php"]
+        "files": ["src/format.php"],
+        "psr-4": {
+            "DocteurKlein\\ProfAnalyze\\": "src/"
+        }
     },
     "require-dev": {
         "phpspec/phpspec": "^4.3",

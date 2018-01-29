@@ -1,0 +1,34 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+namespace DocteurKlein\ProfAnalyze;
+
+$repo = require(__DIR__.'/factory.php');
+
+$id = $argv[1];
+$what = explode(',', $argv[2] ?? 'wt');
+$threshold = intval($argv[3] ?? 0);
+
+$records = $repo->id($id, $threshold);
+
+echo 'strict digraph {';
+
+foreach ($records as $record) {
+    $caller = $record->get('caller');
+    $callee = $record->get('callee');
+    printf('%s [label="%s"];%s', $caller->identity(), addslashes($caller->name), "\n");
+    printf('%s [label="%s"];%s', $callee->identity(), addslashes($callee->name), "\n");
+    $stats = $record->get('stats');
+    foreach ($what as $key) {
+        vprintf('%s -> %s [label="%s"];%s', [
+            $caller->identity(),
+            $callee->identity(),
+            map[$key]($stats->$key, false),
+            "\n"
+        ]);
+    }
+}
+
+echo '}';

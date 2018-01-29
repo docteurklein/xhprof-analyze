@@ -8,6 +8,8 @@ set_error_handler(function($no, $str, $file, $line) {
 });
 
 $run_id = $argv[1];
+$what = $argv[2] ?? 'wt';
+$threshold = intval($argv[3] ?? 0);
 $data = json_decode(file_get_contents('php://stdin'), true);
 
 require(__DIR__.'/../vendor/autoload.php');
@@ -19,7 +21,12 @@ $client = ClientBuilder::create()->addConnection('bolt', getenv('NEO4J_URL'))->b
 $stack = $client->stack();
 
 foreach ($data as $relation => $stats) {
+    error_log($relation);
     $call = explode('==>', $relation);
+    if ($stats[$what] < $threshold) {
+        error_log("ignored");
+        continue;
+    }
     if ($call[0] === 'main') {
         $call[0] = '__main__';
     }
@@ -42,8 +49,6 @@ CYPHER
         'caller' => $caller,
         'callee' => $callee,
     ]);
-
-    error_log($relation);
 }
 
 $results = $client->runStack($stack);

@@ -3,72 +3,41 @@
 
 declare(strict_types=1);
 
-set_error_handler(function($no, $str, $file, $line) {
-    throw new \ErrorException($str, $no, 1, $file, $line);
-});
+namespace DocteurKlein\ProfAnalyze;
+
+$repo = require(__DIR__.'/factory.php');
 
 $old = $argv[1];
 $new = $argv[2];
-$what = $argv[3];
+$what = explode(',', $argv[3] ?? 'wt');
+$threshold = intval($argv[4] ?? 0);
 
-require(__DIR__.'/../vendor/autoload.php');
+$records = $repo->compare($old, $new, $threshold);
 
-use GraphAware\Neo4j\Client\ClientBuilder;
+echo 'digraph {';
 
-$client = ClientBuilder::create()->addConnection('bolt', getenv('NEO4J_URL'))->build();
-
-$result = $client->run(<<<CYPHER
-    MATCH
-        (old_caller:Function)-[old_stats:CALLS {run_id: {old_id}}]->(old_callee:Function),
-        (new_caller:Function {name: old_caller.name})-[new_stats:CALLS {run_id: {new_id}}]->(new_callee:Function {name: old_callee.name})
-    WITH new_caller, new_stats{.*, diff: {
-        xhprof_cpu : new_stats.cpu  - old_stats.cpu,
-        xhprof_wt  : new_stats.wt   - old_stats.wt,
-        xhprof_ct  : new_stats.ct   - old_stats.ct,
-        xhprof_mu  : new_stats.mu   - old_stats.mu,
-        xhprof_pmu : new_stats.pmu  - old_stats.pmu,
-        memprof_memory_size            : new_stats.memory_size             - old_stats.memory_size,
-        memprof_memory_size_inclusive  : new_stats.memory_size_inclusive   - old_stats.memory_size_inclusive,
-        memprof_blocks_count           : new_stats.blocks_count            - old_stats.blocks_count,
-        memprof_blocks_count_inclusive : new_stats.blocks_count_inclusive  - old_stats.blocks_count_inclusive,
-        memprof_calls                  : new_stats.calls                   - old_stats.calls
-    }} as stats, new_callee
-    RETURN new_caller as caller, stats, new_callee as callee;
-CYPHER
-    , [
-        'old_id' => $old,
-        'new_id' => $new,
-    ]
-);
-
-const map = [
-    'xhprof_cpu' => 'format_micro_seconds',
-    'xhprof_wt' => 'format_micro_seconds',
-    'xhprof_ct' => 'format_cardinality',
-    'xhprof_mu' => 'format_bytes',
-    'xhprof_pmu' => 'format_bytes',
-    'memprof_memory_size' => 'format_bytes',
-    'memprof_memory_size_inclusive' => 'format_bytes',
-    'memprof_blocks_count' => 'format_cardinality',
-    'memprof_blocks_count_inclusive' => 'format_cardinality',
-    'memprof_calls' => 'format_cardinality',
-];
-
-echo 'strict digraph {';
-
-foreach ($result->records() as $record) {
+foreach ($records as $record) {
     $caller = $record->get('caller');
     $callee = $record->get('callee');
-    $diff = $record->get('stats')['diff'][$what];
-    printf('%s [label="%s"];%s', $caller->identity(), $caller->name, "\n");
-    printf('%s [label="%s"];%s', $callee->identity(), $callee->name, "\n");
-    vprintf('%s -> %s [label="%s",color="%s"];%s', [
-        $caller->identity(),
-        $callee->identity(),
-        map[$what]($diff, true),
-        $diff < 0 ? 'green' : ($diff == 0 ? '' : 'red'),
-        "\n"
-    ]);
+    printf('%s [label="%s"];%s', $caller->identity(), addslashes($caller->name), "\n");
+    printf('%s [label="%s"];%s', $callee->identity(), addslashes($callee->name), "\n");
+    $from = $record->get('from_stats');
+    $to = $record->get('to_stats');
+    foreach ($what as $key) {
+        $diff = $to->$key - $from->$key;
+        $ratio = $to->$key / $from->$key;
+        $formatted = map[$key]($diff, true);
+
+        vprintf('%s -> %s [label="%s%s",color="%s",fontsize="%s"];%s', [
+            $caller->identity(),
+            $callee->identity(),
+            $formatted,
+            $ratio > 1 ? sprintf(' (x%.2f)', $ratio) : '',
+            $diff < 0 ? 'green' : ($diff == 0 ? '' : 'red'),
+            $ratio > 2 ? '30' : '14',
+            "\n"
+        ]);
+    }
 }
 
 echo '}';
