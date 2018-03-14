@@ -6,6 +6,8 @@ services:
         image: docteurklein/xhprof-analyze
         depends_on:
             - neo4j
+        stdin_open: true
+        tty: false
 
     neo4j:
         image: neo4j

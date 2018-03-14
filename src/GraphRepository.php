@@ -13,6 +13,19 @@ final class GraphRepository
         $this->client = $client;
     }
 
+    public function runs(): iterable
+    {
+        $result = $this->client->run(<<<CYPHER
+            MATCH ()-[stats:CALLS]->()
+            RETURN DISTINCT stats.run_id
+CYPHER
+            , [
+            ]
+        );
+
+        yield from $result->records();
+    }
+
     public function id(string $id, int $threshold = 0): iterable
     {
         $result = $this->client->run(<<<CYPHER

@@ -25,7 +25,7 @@ foreach ($records as $record) {
     $to = $record->get('to_stats');
     foreach ($what as $key) {
         $diff = $to->$key - $from->$key;
-        $ratio = $to->$key / $from->$key;
+        $ratio = $diff < 0 ? $from->$key / $to->$key : $to->$key / $from->$key;
         $formatted = map[$key]($diff, true);
 
         vprintf('%s -> %s [label="%s%s",color="%s",fontsize="%s"];%s', [

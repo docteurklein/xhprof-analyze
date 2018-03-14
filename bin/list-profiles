@@ -1,0 +1,14 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+namespace DocteurKlein\ProfAnalyze;
+
+$repo = require(__DIR__.'/factory.php');
+
+$records = $repo->runs();
+
+foreach ($records as $record) {
+    echo $record->get('stats.run_id'), "\n";
+}
