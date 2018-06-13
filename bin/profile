@@ -21,13 +21,16 @@ foreach ($records as $record) {
     printf('%s [label="%s"];%s', $caller->identity(), addslashes($caller->name), "\n");
     printf('%s [label="%s"];%s', $callee->identity(), addslashes($callee->name), "\n");
     $stats = $record->get('stats');
+    vprintf('%s -> %s [label="%s"];%s', [
+        $caller->identity(),
+        $callee->identity(),
+        implode(', ', array_map(function($key) use($stats) {
+            return sprintf('%s: %s', $key, map[$key]($stats->$key, false));
+        }, $what)),
+        "\n"
+    ]);
+
     foreach ($what as $key) {
-        vprintf('%s -> %s [label="%s"];%s', [
-            $caller->identity(),
-            $callee->identity(),
-            map[$key]($stats->$key, false),
-            "\n"
-        ]);
     }
 }
 

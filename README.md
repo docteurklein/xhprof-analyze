@@ -22,20 +22,20 @@ Example:
     php example/bench1.php | bin/import-xhprof "profile1"
     # improve stuff...
     php example/bench1.php | bin/import-xhprof "profile2"
+    php example/bench1.php | bin/import-xhprof "profile3" wt 1000000 # only import calls that take more than 1s
 
 
 ### Compare 2 profiles by wall time for calls that take more than 100ms
 
     bin/compare profile1 profile2 wt 100000 | xdot -
 
-### Display one profile graph
+### Display one profile graph with wall time, count and memory usage
 
-    bin/profile profile1 wt 100000 | xdot -
+    bin/profile profile1 wt,ct,mu 100000 | xdot -
 
 ## Metrics:
 
 You can provide a comma-separated list of metrics to the scripts.
-This will generate separate arrows for each metric.
 
 Example:
 

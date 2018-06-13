@@ -10,7 +10,9 @@ set_error_handler(function($no, $str, $file, $line) {
 $run_id = $argv[1];
 $what = $argv[2] ?? 'wt';
 $threshold = intval($argv[3] ?? 0);
+
 $data = json_decode(file_get_contents('php://stdin'), true);
+//$data = unserialize(file_get_contents('php://stdin'));
 
 require(__DIR__.'/../vendor/autoload.php');
 
@@ -24,7 +26,7 @@ foreach ($data as $relation => $stats) {
     error_log($relation);
     $call = explode('==>', $relation);
     if ($stats[$what] < $threshold) {
-        error_log("ignored");
+        error_log("ignored because $what (${stats[$what]}) < $threshold");
         continue;
     }
     if ($call[0] === 'main') {
