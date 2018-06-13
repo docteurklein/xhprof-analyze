@@ -23,21 +23,31 @@ foreach ($records as $record) {
     printf('%s [label="%s"];%s', $callee->identity(), addslashes($callee->name), "\n");
     $from = $record->get('from_stats');
     $to = $record->get('to_stats');
-    foreach ($what as $key) {
-        $diff = $to->$key - $from->$key;
-        $ratio = $diff < 0 ? $from->$key / $to->$key : $to->$key / $from->$key;
-        $formatted = map[$key]($diff, true);
 
-        vprintf('%s -> %s [label="%s%s",color="%s",fontsize="%s"];%s', [
-            $caller->identity(),
-            $callee->identity(),
-            $formatted,
-            $ratio > 1 ? sprintf(' (x%.2f)', $ratio) : '',
-            $diff < 0 ? 'green' : ($diff == 0 ? '' : 'red'),
-            $ratio > 2 ? '30' : '14',
-            "\n"
-        ]);
-    }
+    $firstKey = current($what);
+    $firstDiff = $to->$firstKey - $from->$firstKey;
+    $firstRatio = $firstDiff < 0 ? $from->$firstKey / $to->$firstKey : $to->$firstKey / $from->$firstKey;
+
+    vprintf('%s -> %s [label="%s",color="%s",fontsize="%s"];%s', [
+        $caller->identity(),
+        $callee->identity(),
+        implode(', ', array_filter(array_map(function($key, $i) use($from, $to, $firstRatio) {
+            $diff = $to->$key - $from->$key;
+            if (!$diff) {
+                return;
+            }
+            $formatted = map[$key]($diff, true);
+
+            return vsprintf('%s: %s%s', [
+                $key,
+                $formatted,
+                $i === 0 && $firstRatio > 1 ? sprintf(' (x%.2f)', $firstRatio) : '',
+            ]);
+        }, $what, array_keys($what)))),
+        $firstDiff < 0 ? 'green' : 'red',
+        $firstRatio * 2,
+        "\n"
+    ]);
 }
 
 echo '}';

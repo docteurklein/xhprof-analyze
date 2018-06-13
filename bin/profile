@@ -29,9 +29,6 @@ foreach ($records as $record) {
         }, $what)),
         "\n"
     ]);
-
-    foreach ($what as $key) {
-    }
 }
 
 echo '}';
