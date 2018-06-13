@@ -61,3 +61,35 @@ For [memprof](https://github.com/arnaud-lb/php-memory-profiler#memprof_dump_arra
 ## Environment variables
 
 - `NEO4J_URL`: a valid `bolt` URL pointing to a neo4j instance
+
+
+## Example of automatic dump with `auto_prepend_file`
+
+Configure php.ini's `auto_prepend_file` directive to point to a file containing the following,
+and send signals (using `pkill -SIGINT` for example), or wait for `register_shutdown_function` to do it.
+
+By sending regular `SIGINT` signals, you will end up with different dumps relating the evolution of your program in time.
+You'll then be able to use `bin/compare` to analyze the differences.
+
+
+```php
+<?php declare(strict_types=1);
+
+pcntl_async_signals(true);
+
+$signal = getenv('XHPROF_SIGNAL') ?: SIGINT;
+error_log('xhprof dump at signal: '.strval($signal));
+
+function dump_xhprof($signo) {
+    $path = strval(microtime(true)).(getenv('XHPROF_PATH') ?: '-xhprof.json');
+    error_log('dumping xhprof profile at path: '.$path);
+    file_put_contents($path, json_encode(tideways_xhprof_disable()));
+    tideways_xhprof_enable(TIDEWAYS_XHPROF_FLAGS_MEMORY | TIDEWAYS_XHPROF_FLAGS_CPU);
+}
+
+register_shutdown_function('dump_xhprof', 0);
+
+pcntl_signal($signal, 'dump_xhprof');
+tideways_xhprof_enable(TIDEWAYS_XHPROF_FLAGS_MEMORY | TIDEWAYS_XHPROF_FLAGS_CPU);
+```
+
