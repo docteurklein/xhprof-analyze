@@ -33,6 +33,10 @@ Example:
 
     bin/profile profile1 wt,ct,mu 100000 | xdot -
 
+### display tabular data:
+
+    bin/profile-table asset1 ct,wt | sort -rn -k3 -k4 | column -t |less
+
 ## Metrics:
 
 You can provide a comma-separated list of metrics to the scripts.

@@ -1,0 +1,30 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+namespace DocteurKlein\ProfAnalyze;
+
+$repo = require(__DIR__.'/factory.php');
+
+$id = $argv[1];
+$what = explode(',', $argv[2] ?? 'wt');
+$threshold = intval($argv[3] ?? 0);
+
+$records = $repo->id($id, $threshold);
+
+$fd = fopen('php://output', 'w');
+fputcsv($fd, array_merge(['caller', 'callee'], $what), "\t");
+
+foreach ($records as $i => $record) {
+    $caller = $record->get('caller');
+    $callee = $record->get('callee');
+    $stats = $record->get('stats');
+    $values = array_map(function($key) use($stats) {
+        return $stats->$key;
+        return map[$key]($stats->$key, false);
+    }, $what);
+    fputcsv($fd, array_merge([$caller->name, $callee->name], $values), "\t");
+}
+
+fclose($fd);
