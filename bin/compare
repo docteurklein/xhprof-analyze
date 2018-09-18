@@ -45,7 +45,7 @@ foreach ($records as $record) {
             ]);
         }, $what, array_keys($what)))),
         $firstDiff < 0 ? 'green' : 'red',
-        $firstRatio * 2,
+        min(30, $firstRatio * 2),
         "\n"
     ]);
 }
