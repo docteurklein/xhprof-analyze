@@ -4,6 +4,7 @@ services:
     php:
         volumes:
             - .:/usr/src/app
+            - $HOME/work:/$HOME/work
         environment:
             NEO4J_URL: bolt://neo4j
         user: 1000:1000

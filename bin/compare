@@ -26,7 +26,8 @@ foreach ($records as $record) {
 
     $firstKey = current($what);
     $firstDiff = $to->$firstKey - $from->$firstKey;
-    $firstRatio = $firstDiff < 0 ? $from->$firstKey / $to->$firstKey : $to->$firstKey / $from->$firstKey;
+    $firstRatio = $firstDiff < 0 ? $from->$firstKey / max(1, $to->$firstKey) : $to->$firstKey / max(1, $from->$firstKey);
+    $firstRatio = max(10, $firstRatio);
 
     vprintf('%s -> %s [label="%s",color="%s",fontsize="%s"];%s', [
         $caller->identity(),

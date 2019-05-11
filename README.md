@@ -54,14 +54,6 @@ For [xhprof](https://github.com/tideways/php-profiler-extension/blob/master/READ
  - `pmu` The sum of increase in `memory_get_peak_usage` for this parent ==> child function pair.
 
 
-For [memprof](https://github.com/arnaud-lb/php-memory-profiler#memprof_dump_array):
-
- - `memory_size`: exclusive memory usage of function call
- - `memory_size_inclusive`: inclusive memory usage of function call
- - `blocks_count`: exclusive blocks count of function call (number of allocated)
- - `blocks_count_inclusive`: inclusive blocks count of function call (number of allocated)
- - `calls`: number of calls made by the caller
-
 ## Environment variables
 
 - `NEO4J_URL`: a valid `bolt` URL pointing to a neo4j instance
@@ -97,3 +89,12 @@ pcntl_signal($signal, 'dump_xhprof');
 tideways_xhprof_enable(TIDEWAYS_XHPROF_FLAGS_MEMORY | TIDEWAYS_XHPROF_FLAGS_CPU);
 ```
 
+
+## analyze evolution over time series with influxdb
+
+Once you generated many profiles, you can import the results into influxdb and see how results evolve over time,
+like how the wall time of 'array_map' evolves:
+
+    php bin/into-influxdb array_map | curl -sSL -XPOST 'http://localhost:8086/write?db=mydb&precision=s' --data-binary '@-'
+
+Then use the TICK stack to make dashboards of some metrics.

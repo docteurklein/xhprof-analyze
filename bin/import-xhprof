@@ -41,6 +41,7 @@ foreach ($data as $relation => $stats) {
     $stack->push('MERGE (:Function {name: {name}})', ['name' => $callee]);
 
     $stats['run_id'] = $run_id;
+    $stats['timestamp'] = time();
 
     $stack->push(<<<CYPHER
         MATCH (caller:Function {name: {caller}}),(callee:Function {name: {callee}})
@@ -54,4 +55,3 @@ CYPHER
 }
 
 $results = $client->runStack($stack);
-

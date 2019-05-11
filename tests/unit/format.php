@@ -1,27 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace tests\unit;
-
-final class format implements \Funk\Spec
-{
-    function it_format_microseconds()
-    {
-        expect(format_micro_seconds(-9871))->to->equal('-9.87 ms');
-        expect(format_micro_seconds(1))->to->equal('1 μs');
-        expect(format_micro_seconds(5656565, true))->to->equal('+5.66 s');
-    }
-
-    function it_format_bytes()
-    {
-        expect(format_bytes(-9871))->to->equal('-9.87 KB');
-        expect(format_bytes(1))->to->equal('1 B');
-        expect(format_bytes(5656565, true))->to->equal('+5.66 MB');
-    }
-
-    function it_format_cardinality()
-    {
-        expect(format_cardinality(-9871))->to->equal('-9.87K');
-        expect(format_cardinality(1))->to->equal('1');
-        expect(format_cardinality(5656565, true))->to->equal('+5.66M');
-    }
-}
+assert(format_micro_seconds(-9871) == '-9.87 ms');
+assert(format_micro_seconds(1) == '1 μs');
+assert(format_micro_seconds(5656565, true) == '+5.66 s');
+assert(format_bytes(-9871) == '-9.87 KB');
+assert(format_bytes(1) == '1 B');
+assert(format_bytes(5656565, true) == '+5.66 MB');
+assert(format_cardinality(-9871) == '-9.87K');
+assert(format_cardinality(1) == '1');
+assert(format_cardinality(5656565, true) == '+5.66M');
+echo 'ok';

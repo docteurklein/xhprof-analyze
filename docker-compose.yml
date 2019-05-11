@@ -9,3 +9,25 @@ services:
 
     neo4j:
         image: neo4j
+
+    telegraf:
+        image: telegraf:1.10-alpine
+
+    influxdb:
+        image: influxdb:1.7-alpine
+        ports:
+            - "8086:8086"
+
+    chronograf:
+        image: chronograf:1.7-alpine
+        environment:
+            INFLUXDB_URL: http://influxdb:8086
+            KAPACITOR_URL: http://kapacitor:9092
+        ports:
+            - "9888:8888"
+
+    kapacitor:
+        image: kapacitor:1.5-alpine
+        environment:
+            KAPACITOR_HOSTNAME: kapacitor
+            KAPACITOR_INFLUXDB_0_URLS_0: http://influxdb:8086

@@ -20,8 +20,5 @@
         }
     },
     "require-dev": {
-        "phpspec/phpspec": "^4.3",
-        "docteurklein/funk-spec": "^0.1.2",
-        "peridot-php/leo": "^1.6"
     }
 }

@@ -1,0 +1,24 @@
+#!/usr/bin/env php
+<?php declare(strict_types=1);
+
+namespace DocteurKlein\ProfAnalyze;
+
+$repo = require(__DIR__.'/factory.php');
+
+$caller = $argv[1];
+$what = explode(',', $argv[2] ?? 'wt,ct,mu');
+
+$records = $repo->statsByCaller($caller);
+
+foreach ($records as $record) {
+    $stats = array_intersect_key($record->get('stats')->asArray(), array_combine($what, $what));
+    $values = implode(',', array_map(function($key, $stat) {
+        return sprintf('%s=%s', $key, $stat);
+    }, array_keys($stats), $stats));
+    printf("%s,%s %s %d\n",
+        $record->get('caller')->name,
+        'type=call',
+        $values,
+        $record->get('stats')->timestamp
+    );
+}

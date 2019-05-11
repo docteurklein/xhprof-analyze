@@ -61,4 +61,18 @@ CYPHER
 
         yield from $result->records();
     }
+
+    public function statsByCaller(string $caller): iterable
+    {
+        $result = $this->client->run(<<<CYPHER
+            MATCH (caller:Function {name: {caller}})-[stats:CALLS]->(callee:Function)
+            RETURN caller, stats, callee;
+CYPHER
+            , [
+                'caller' => $caller,
+            ]
+        );
+
+        yield from $result->records();
+    }
 }

@@ -17,11 +17,9 @@ const map = [
     'ct' => 'format_cardinality',
     'mu' => 'format_bytes',
     'pmu' => 'format_bytes',
-    'memory_size' => 'format_bytes',
-    'memory_size_inclusive' => 'format_bytes',
-    'blocks_count' => 'format_cardinality',
-    'blocks_count_inclusive' => 'format_cardinality',
-    'calls' => 'format_cardinality',
+    'mem.na' => 'format_cardinality',
+    'mem.nf' => 'format_cardinality',
+    'mem.aa' => 'format_bytes',
 ];
 
 return new GraphRepository(ClientBuilder::create()->addConnection('bolt', getenv('NEO4J_URL'))->build());
